@@ -22,9 +22,9 @@ test_that("audit_report errors on non-trail", {
   expect_error(audit_report("not_a_trail"), "audit_trail")
 })
 
-test_that("audit_report errors on rmd format", {
-  trail <- audit_trail("rmd_test")
-  expect_error(audit_report(trail, format = "rmd"), "not yet implemented")
+test_that("audit_report rejects unknown format", {
+  trail <- audit_trail("format_test")
+  expect_error(audit_report(trail, format = "rmd"))
 })
 
 test_that("audit_report works with empty trail", {
@@ -55,4 +55,19 @@ test_that("audit_report shows unnamed .fns with auto-generated names", {
   expect_true(grepl("Custom Diagnostics", combined))
   expect_true(grepl("fn_1", combined))
   expect_true(grepl("fn_2", combined))
+})
+
+test_that("audit_report shows snapshot controls when non-default", {
+  trail <- audit_trail("controls_report")
+  mtcars |> audit_tap(trail, "raw")
+  mtcars |> audit_tap(trail, "filtered_cols",
+                       .cols_include = c("mpg", "cyl"),
+                       .numeric_summary = FALSE)
+
+  output <- capture.output(audit_report(trail), type = "message")
+  combined <- paste(output, collapse = "\n")
+  expect_true(grepl("Snapshot Controls", combined))
+  expect_true(grepl("filtered_cols", combined))
+  expect_true(grepl("cols_include", combined))
+  expect_true(grepl("numeric_summary", combined))
 })

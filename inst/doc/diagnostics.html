@@ -342,25 +342,24 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(tidyaudit)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; Attaching package: &#39;dplyr&#39;</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:stats&#39;:</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt;     filter, lag</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; The following objects are masked from &#39;package:base&#39;:</span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span></code></pre></div>
-<p>tidyaudit includes tidyverse ports of the diagnostic functions from
-<a href="https://github.com/fpcordeiro/dtaudit">dtaudit</a>. These
-functions help you understand joins, validate keys, compare tables,
-diagnose missing values and string quality, and filter with full
-visibility.</p>
-<div id="join-diagnostics" class="section level2">
-<h2>Join diagnostics</h2>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div>
+<p>Before you build a pipeline, you need to understand your data. Before
+you trust a join, you need to verify the keys. Before you filter, you
+want to know what you’ll lose. tidyaudit’s diagnostic functions help
+with the detective work that comes before, during, and after every
+analysis.</p>
+<p>These functions are designed for <strong>interactive use</strong> —
+the questions you ask in the console while exploring a dataset or
+debugging a transformation. They complement the <a href="tidyaudit.html">audit trail system</a>, which instruments
+production pipelines.</p>
+<div id="before-you-join" class="section level2">
+<h2>Before you join</h2>
+<p>You’re about to left-join orders to customers. Will every order
+match? Will the join create duplicates? How many rows will end up with
+NAs?</p>
 <p><code>validate_join()</code> analyzes a potential join
 <strong>without performing it</strong>, reporting match rates,
-relationship type, duplicate keys, and unmatched rows.</p>
+relationship type, duplicate keys, and unmatched rows:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>orders <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">id     =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>),</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">amount =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">150</span>, <span class="dv">175</span>, <span class="dv">300</span>, <span class="dv">50</span>)</span>
@@ -423,11 +422,11 @@ relationship type, duplicate keys, and unmatched rows.</p>
 <span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; Duplicates: products=no sales=yes</span></span></code></pre></div>
 </div>
-<div id="stat-tracking" class="section level3">
-<h3>Stat tracking</h3>
-<p>Track the impact on a numeric column with <code>stat</code> (same
-column name in both tables) or <code>stat_x</code>/<code>stat_y</code>
-(different column names):</p>
+<div id="tracking-the-impact-on-a-metric" class="section level3">
+<h3>Tracking the impact on a metric</h3>
+<p>Want to know the revenue at risk from unmatched keys? Use
+<code>stat</code> (same column name in both tables) or
+<code>stat_x</code>/<code>stat_y</code> (different column names):</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="at">revenue =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">300</span>, <span class="dv">400</span>))</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="fu">c</span>(<span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">5</span><span class="dt">L</span>), <span class="at">cost =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>))</span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
@@ -468,19 +467,19 @@ column name in both tables) or <code>stat_x</code>/<code>stat_y</code>
 <span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; Duplicates: x=no y=no</span></span></code></pre></div>
 </div>
 </div>
-<div id="key-validation" class="section level2">
-<h2>Key validation</h2>
-<div id="primary-keys" class="section level3">
-<h3>Primary keys</h3>
+<div id="are-your-keys-unique" class="section level2">
+<h2>Are your keys unique?</h2>
+<p>You assume <code>id</code> uniquely identifies every row. Does
+it?</p>
 <p><code>validate_primary_keys()</code> tests whether a set of columns
-uniquely identify every row:</p>
+forms a valid primary key:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">id    =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>, <span class="dv">4</span><span class="dt">L</span>),</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">group =</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;A&quot;</span>),</span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>)</span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>)</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># Single column — not unique</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># Single column -- not unique</span></span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">validate_primary_keys</span>(df, <span class="st">&quot;id&quot;</span>)</span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; ── Primary Key Validation ──────────────────────────────────────────────────────</span></span>
@@ -499,7 +498,7 @@ uniquely identify every row:</p>
 <span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt;   id n</span></span>
 <span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 1  3 2</span></span>
 <span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co"># Composite key — unique</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co"># Composite key -- unique</span></span>
 <span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="fu">validate_primary_keys</span>(df, <span class="fu">c</span>(<span class="st">&quot;id&quot;</span>, <span class="st">&quot;group&quot;</span>))</span>
 <span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; ── Primary Key Validation ──────────────────────────────────────────────────────</span></span>
@@ -513,11 +512,11 @@ uniquely identify every row:</p>
 <span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a><span class="co">#&gt;   Duplicate key combos         0</span></span>
 <span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="co">#&gt; ✔ YES - Keys uniquely identify all rows.</span></span></code></pre></div>
-</div>
-<div id="variable-relationships" class="section level3">
-<h3>Variable relationships</h3>
-<p><code>validate_var_relationship()</code> determines the relationship
-between two columns:</p>
+<div id="beyond-uniqueness-whats-the-relationship" class="section level3">
+<h3>Beyond uniqueness: what’s the relationship?</h3>
+<p><code>validate_var_relationship()</code> determines the functional
+relationship between two columns — one-to-one, one-to-many, many-to-one,
+or many-to-many:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>df2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">dept    =</span> <span class="fu">c</span>(<span class="st">&quot;Sales&quot;</span>, <span class="st">&quot;Sales&quot;</span>, <span class="st">&quot;Engineering&quot;</span>, <span class="st">&quot;Engineering&quot;</span>),</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">manager =</span> <span class="fu">c</span>(<span class="st">&quot;Ann&quot;</span>, <span class="st">&quot;Ann&quot;</span>, <span class="st">&quot;Bob&quot;</span>, <span class="st">&quot;Bob&quot;</span>)</span>
@@ -540,9 +539,11 @@ between two columns:</p>
 <span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; Relationship: ONE-TO-ONE</span></span></code></pre></div>
 </div>
 </div>
-<div id="table-comparison" class="section level2">
-<h2>Table comparison</h2>
-<p><code>compare_tables()</code> compares two data.frames by examining
+<div id="what-changed-between-versions" class="section level2">
+<h2>What changed between versions?</h2>
+<p>You have yesterday’s extract and today’s extract. Or the data before
+your transformation and after. What’s different?</p>
+<p><code>compare_tables()</code> compares two data frames by examining
 columns, row counts, key overlap, and numeric discrepancies:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>before <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">value =</span> <span class="fu">c</span>(<span class="fl">10.0</span>, <span class="fl">20.0</span>, <span class="fl">30.0</span>, <span class="fl">40.0</span>, <span class="fl">50.0</span>))</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>after  <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="at">value =</span> <span class="fu">c</span>(<span class="fl">10.0</span>, <span class="fl">22.5</span>, <span class="fl">30.0</span>, <span class="fl">40.0</span>, <span class="fl">55.0</span>))</span>
@@ -565,26 +566,42 @@ columns, row counts, key overlap, and numeric discrepancies:</p>
 <span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; Key columns: id (auto-detected)</span></span>
 <span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; Distinct combos in before: 5</span></span>
 <span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt; Distinct combos in after: 5</span></span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; Matching combos: 5</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; Only in before: 0</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; Only in after: 0</span></span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 4. Numeric discrepancies (absolute differences)</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; Comparing after merging on keys.</span></span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; Rows matched: 5</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 4. Row matching</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; Only in before: 0</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; Only in after: 0</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; Matched, no discrepancies: 3 (60%)</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; Matched, with discrepancies: 2 (40%)</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; Total cell discrepancies: 2 (2 numeric, 0 categorical)</span></span>
 <span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt;     Column  N  Min  Q25  Median  Q75  Max</span></span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt;     ──────  ─  ───  ───  ──────  ───  ───</span></span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt;     value   5    0    0       0  2.5    5</span></span></code></pre></div>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 5. Numeric discrepancies (absolute differences)</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; Compared after merging on keys.</span></span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; Rows matched: 5</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="co">#&gt;     Column  N  Min  Q25  Median  Q75  Max  &gt;tol</span></span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="co">#&gt;     ──────  ─  ───  ───  ──────  ───  ───  ────</span></span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a><span class="co">#&gt;     value   5    0    0       0  2.5    5     2</span></span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a><span class="co">#&gt; Top discrepancies:</span></span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a><span class="co">#&gt;     id  column  value_x  value_y  abs_diff  pct_diff</span></span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a><span class="co">#&gt;     ──  ──────  ───────  ───────  ────────  ────────</span></span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a><span class="co">#&gt;     5   value        50     55.0       5.0      9.1%</span></span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a><span class="co">#&gt;     2   value        20     22.5       2.5     11.1%</span></span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a><span class="co">#&gt; 6. Categorical discrepancies</span></span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a><span class="co">#&gt; No categorical discrepancies found.</span></span></code></pre></div>
 </div>
-<div id="filter-diagnostics" class="section level2">
-<h2>Filter diagnostics</h2>
-<p><code>filter_keep()</code> and <code>filter_drop()</code> filter data
-while printing diagnostics about what was removed.</p>
+<div id="filter-with-visibility" class="section level2">
+<h2>Filter with visibility</h2>
+<p><code>dplyr::filter()</code> silently removes rows. You apply the
+condition, the rows vanish, and you move on. <code>filter_keep()</code>
+and <code>filter_drop()</code> do the same filtering but tell you
+exactly what was removed — and optionally warn you when too much is
+gone.</p>
 <div id="filter_keep" class="section level3">
 <h3>filter_keep</h3>
 <p>Keeps rows where the condition is <code>TRUE</code> (same as
-<code>dplyr::filter()</code>):</p>
+<code>dplyr::filter()</code>), with diagnostic output:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>sales <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">id     =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">amount =</span> <span class="fu">c</span>(<span class="dv">500</span>, <span class="dv">25</span>, <span class="dv">1200</span>, <span class="dv">80</span>, <span class="dv">3000</span>, <span class="dv">15</span>, <span class="dv">750</span>, <span class="dv">40</span>, <span class="dv">2000</span>, <span class="dv">60</span>),</span>
@@ -608,7 +625,7 @@ inverse):</p>
 <div id="warning-thresholds" class="section level3">
 <h3>Warning thresholds</h3>
 <p>Set <code>.warn_threshold</code> to get a warning when too many rows
-are dropped:</p>
+are dropped — a safety net for production pipelines:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">filter_keep</span>(sales, amount <span class="sc">&gt;</span> <span class="dv">1000</span>, <span class="at">.stat =</span> amount, <span class="at">.warn_threshold =</span> <span class="fl">0.5</span>)</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; filter_keep(sales, amount &gt; 1000)</span></span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; Dropped 7 of 10 rows (70.00%).</span></span>
@@ -620,10 +637,11 @@ are dropped:</p>
 <span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3  9   2000  valid</span></span></code></pre></div>
 </div>
 </div>
-<div id="data-quality" class="section level2">
-<h2>Data quality</h2>
-<div id="missing-value-diagnosis" class="section level3">
-<h3>Missing value diagnosis</h3>
+<div id="diagnose-data-quality" class="section level2">
+<h2>Diagnose data quality</h2>
+<p>You just received a dataset. Where are the gaps?</p>
+<div id="missing-values" class="section level3">
+<h3>Missing values</h3>
 <p><code>diagnose_nas()</code> reports NA counts and percentages for
 every column:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>messy <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
@@ -647,113 +665,379 @@ every column:</p>
 <div id="column-summaries" class="section level3">
 <h3>Column summaries</h3>
 <p><code>summarize_column()</code> gives type-appropriate statistics for
-a single vector:</p>
+a single vector — quantiles for numeric, value counts for character,
+balance for logical:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">summarize_column</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="cn">NA</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">100</span>))</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt;               type           n_unique            missing      most_frequent </span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt;          &quot;numeric&quot;                &quot;6&quot;                &quot;1&quot;                 NA </span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;               mean                 sd                min                q25 </span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; &quot;20.1666666666667&quot; &quot;39.2398606861271&quot;                &quot;1&quot;             &quot;2.25&quot; </span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;                q50                q75                max           example1 </span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;                &quot;4&quot;             &quot;8.75&quot;              &quot;100&quot;                &quot;1&quot; </span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;           example2           example3 </span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;                &quot;2&quot;                &quot;3&quot;</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt;                type            n_unique             missing       missing_share </span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt;           &quot;numeric&quot;                 &quot;6&quot;                 &quot;1&quot; &quot;0.142857142857143&quot; </span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;       most_frequent                mean                  sd                 min </span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;                  NA  &quot;20.1666666666667&quot;  &quot;39.2398606861271&quot;                 &quot;1&quot; </span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;                 q25                 q50                 q75                 max </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;              &quot;2.25&quot;                 &quot;4&quot;              &quot;8.75&quot;               &quot;100&quot; </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;            example1            example2            example3 </span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;                 &quot;1&quot;                 &quot;2&quot;                 &quot;3&quot;</span></span>
 <span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">summarize_column</span>(<span class="fu">c</span>(<span class="st">&quot;apple&quot;</span>, <span class="st">&quot;banana&quot;</span>, <span class="st">&quot;apple&quot;</span>, <span class="st">&quot;cherry&quot;</span>, <span class="cn">NA</span>))</span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;          type      n_unique       missing most_frequent          mean </span></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;   &quot;character&quot;           &quot;3&quot;           &quot;1&quot;       &quot;apple&quot;            NA </span></span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;            sd           min           q25           q50           q75 </span></span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;            NA       &quot;apple&quot;            NA            NA            NA </span></span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;           max      example1      example2      example3 </span></span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;      &quot;cherry&quot;       &quot;apple&quot;      &quot;banana&quot;       &quot;apple&quot;</span></span></code></pre></div>
-<p><code>get_summary_table()</code> applies this to all columns (or
-selected ones):</p>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;          type      n_unique       missing missing_share most_frequent </span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;   &quot;character&quot;           &quot;3&quot;           &quot;1&quot;         &quot;0.2&quot;       &quot;apple&quot; </span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;          mean            sd           min           q25           q50 </span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;            NA            NA       &quot;apple&quot;            NA            NA </span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;           q75           max      example1      example2      example3 </span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;            NA      &quot;cherry&quot;       &quot;apple&quot;      &quot;banana&quot;       &quot;apple&quot;</span></span></code></pre></div>
+<p><code>get_summary_table()</code> applies this across all columns (or
+a selection):</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">get_summary_table</span>(messy)</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt;   variable      type n_unique missing most_frequent             mean</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; 1       id   numeric        6       0          &lt;NA&gt;              3.5</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; 2     name character        4       2             A             &lt;NA&gt;</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; 3    score   numeric        3       3          &lt;NA&gt; 26.6666666666667</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; 4    grade character        3       1             A             &lt;NA&gt;</span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;                 sd min  q25  q50  q75 max example1 example2 example3</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; 1 1.87082869338697   1 2.25  3.5 4.75   6        1        2        3</span></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; 2             &lt;NA&gt;   A &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;   F        A        C        D</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; 3 20.8166599946613  10   15   20   35  50       10       20       50</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; 4             &lt;NA&gt;   A &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;   C        A        B        C</span></span></code></pre></div>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt;   variable      type n_unique missing     missing_share most_frequent</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; 1       id   numeric        6       0                 0          &lt;NA&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; 2     name character        4       2 0.333333333333333             A</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; 3    score   numeric        3       3               0.5          &lt;NA&gt;</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; 4    grade character        3       1 0.166666666666667             A</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;               mean               sd min  q25  q50  q75 max example1 example2</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; 1              3.5 1.87082869338697   1 2.25  3.5 4.75   6        1        2</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; 2             &lt;NA&gt;             &lt;NA&gt;   A &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;   F        A        C</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; 3 26.6666666666667 20.8166599946613  10   15   20   35  50       10       20</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; 4             &lt;NA&gt;             &lt;NA&gt;   A &lt;NA&gt; &lt;NA&gt; &lt;NA&gt;   C        A        B</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;   example3</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; 1        3</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt; 2        D</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt; 3       50</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; 4        C</span></span></code></pre></div>
 </div>
 </div>
-<div id="string-cleaning" class="section level2">
-<h2>String cleaning</h2>
-<p>These functions require the <strong>stringi</strong> package (listed
-in Suggests).</p>
-<div id="diagnose_strings" class="section level3">
-<h3>diagnose_strings</h3>
-<p><code>diagnose_strings()</code> audits a character vector for common
-quality issues:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>firms <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Apple&quot;</span>, <span class="st">&quot;APPLE&quot;</span>, <span class="st">&quot;apple&quot;</span>, <span class="st">&quot;  Microsoft &quot;</span>, <span class="st">&quot;Google&quot;</span>, <span class="cn">NA</span>, <span class="st">&quot;&quot;</span>)</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">diagnose_strings</span>(firms)</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; ── String Column Diagnosis: firms ──────────────────────────────────────────────</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; Total elements: 7</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; Missing &amp; Empty:</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; • NA values: 1 (14.3%)</span></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; • Empty strings: 1 (14.3%)</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; • Whitespace-only: 0 (0.0%)</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt; Whitespace Issues:</span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; • Leading whitespace: 1</span></span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; • Trailing whitespace: 1</span></span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt; Encoding:</span></span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt; • Non-ASCII chars: 0</span></span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt; Case Inconsistencies:</span></span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co">#&gt; • Variant groups: 1</span></span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt; • Total variants: 3</span></span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt; Case variant examples (up to 5 groups):</span></span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt;  lower n_variants            examples</span></span>
-<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt;  apple          3 Apple, APPLE, apple</span></span></code></pre></div>
+<div id="frequency-tables" class="section level2">
+<h2>Frequency tables</h2>
+<p>Base R’s <code>table()</code> gives you raw counts.
+<code>tab()</code> gives you percentages, cumulative totals, sorting,
+cutoffs, weighting, and two-way crosstabulations.</p>
+<div id="one-way-tables" class="section level3">
+<h3>One-way tables</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">tab</span>(mtcars, cyl)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; ── Tabulation: cyl ─────────────────────────────────────────────────────────────</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; 32 observations</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt;   Value  Freq  Percent    Cum.</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;   ─────  ────  ───────  ──────</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;   4        11    34.4%   34.4%</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt;   6         7    21.9%   56.3%</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt;   8        14    43.8%  100.0%</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt;   ─────  ────  ───────  ──────</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt;   Total    32   100.0%</span></span></code></pre></div>
 </div>
-<div id="audit_transform" class="section level3">
-<h3>audit_transform</h3>
+<div id="sorting-and-cutoffs" class="section level3">
+<h3>Sorting and cutoffs</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Sort by frequency</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">tab</span>(mtcars, carb, <span class="at">.sort =</span> <span class="st">&quot;freq_desc&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; ── Tabulation: carb ────────────────────────────────────────────────────────────</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; 32 observations</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt;   Value  Freq  Percent   Cum.</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   ─────  ────  ───────  ─────</span></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt;   2        10    31.2%  31.2%</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt;   4        10    31.2%  62.4%</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt;   1         7    21.9%  84.3%</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt;   3         3     9.4%  93.7%</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt;   6         1     3.1%  96.8%</span></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt;   8         1     3.1%  99.9%</span></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="co">#&gt;   ─────  ────  ───────  ─────</span></span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="co">#&gt;   Total    32   100.0%</span></span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a></span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="co"># Keep only top-2 values, collapse rest into (Other)</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="fu">tab</span>(mtcars, carb, <span class="at">.cutoff =</span> <span class="dv">2</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; ── Tabulation: carb ────────────────────────────────────────────────────────────</span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; 32 observations</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt;   Value    Freq  Percent   Cum.</span></span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a><span class="co">#&gt;   ───────  ────  ───────  ─────</span></span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a><span class="co">#&gt;   2          10    31.2%  31.2%</span></span>
+<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a><span class="co">#&gt;   4          10    31.2%  62.4%</span></span>
+<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a><span class="co">#&gt;   (Other)    12    37.5%  99.9%</span></span>
+<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a><span class="co">#&gt;   ───────  ────  ───────  ─────</span></span>
+<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a><span class="co">#&gt;   Total      32   100.0%</span></span>
+<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a><span class="co">#&gt; (Other) collapses 4 values below cutoff</span></span></code></pre></div>
+</div>
+<div id="two-way-crosstabulations" class="section level3">
+<h3>Two-way crosstabulations</h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">tab</span>(mtcars, cyl, gear)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co">#&gt; ── Crosstabulation: cyl × gear ─────────────────────────────────────────────────</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt; 32 observations | Cell contents: count</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt;   cyl     3   4  5  Total</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co">#&gt;   ─────  ──  ──  ─  ─────</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co">#&gt;   4       1   8  2     11</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="co">#&gt;   6       2   4  1      7</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="co">#&gt;   8      12   0  2     14</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co">#&gt;   ─────  ──  ──  ─  ─────</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="co">#&gt;   Total  15  12  5     32</span></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="co"># Show row percentages instead of counts</span></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="fu">tab</span>(mtcars, cyl, gear, <span class="at">.display =</span> <span class="st">&quot;row_pct&quot;</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co">#&gt; ── Crosstabulation: cyl × gear ─────────────────────────────────────────────────</span></span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="co">#&gt; 32 observations | Cell contents: row %</span></span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="co">#&gt;   cyl        3      4      5  Total</span></span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a><span class="co">#&gt;   ─────  ─────  ─────  ─────  ─────</span></span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="co">#&gt;   4       9.1%  72.7%  18.2%     11</span></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt;   6      28.6%  57.1%  14.3%      7</span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="co">#&gt;   8      85.7%   0.0%  14.3%     14</span></span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="co">#&gt;   ─────  ─────  ─────  ─────  ─────</span></span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt;   Total     15     12      5     32</span></span></code></pre></div>
+</div>
+<div id="weighted-tabulation" class="section level3">
+<h3>Weighted tabulation</h3>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">tab</span>(mtcars, cyl, <span class="at">.wt =</span> mpg)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co">#&gt; ── Tabulation: cyl (weighted by mpg) ───────────────────────────────────────────</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co">#&gt; 32 observations</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#&gt;   Value   Freq  Percent    Cum.</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co">#&gt;   ─────  ─────  ───────  ──────</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt;   4      293.3    45.6%   45.6%</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt;   6      138.2    21.5%   67.1%</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt;   8      211.4    32.9%  100.0%</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt;   ─────  ─────  ───────  ──────</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="co">#&gt;   Total  642.9   100.0%</span></span></code></pre></div>
+</div>
+</div>
+<div id="string-quality" class="section level2">
+<h2>String quality</h2>
+<p>Duplicates hiding behind case differences, leading spaces, and
+encoding issues are among the most common causes of failed joins and
+inflated group counts.</p>
+<p><code>diagnose_strings()</code> audits a character vector for these
+problems:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>firms <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Apple&quot;</span>, <span class="st">&quot;APPLE&quot;</span>, <span class="st">&quot;apple&quot;</span>, <span class="st">&quot;  Microsoft &quot;</span>, <span class="st">&quot;Google&quot;</span>, <span class="cn">NA</span>, <span class="st">&quot;&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">diagnose_strings</span>(firms)</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co">#&gt; ── String Column Diagnosis: firms ──────────────────────────────────────────────</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="co">#&gt; Total elements: 7</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co">#&gt; Missing &amp; Empty:</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="co">#&gt; • NA values: 1 (14.3%)</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="co">#&gt; • Empty strings: 1 (14.3%)</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co">#&gt; • Whitespace-only: 0 (0.0%)</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a><span class="co">#&gt; Whitespace Issues:</span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; • Leading whitespace: 1</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a><span class="co">#&gt; • Trailing whitespace: 1</span></span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a><span class="co">#&gt; Encoding:</span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a><span class="co">#&gt; • Non-ASCII chars: 0</span></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a><span class="co">#&gt; Case Inconsistencies:</span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a><span class="co">#&gt; • Variant groups: 1</span></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a><span class="co">#&gt; • Total variants: 3</span></span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a><span class="co">#&gt; Case variant examples (up to 5 groups):</span></span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a><span class="co">#&gt;  lower n_variants            examples</span></span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a><span class="co">#&gt;  apple          3 Apple, APPLE, apple</span></span></code></pre></div>
+</div>
+<div id="audit-your-transformations" class="section level2">
+<h2>Audit your transformations</h2>
+<p>You’re about to apply <code>trimws()</code> to a column, or
+<code>round()</code> to a price vector. How many values will actually
+change? What will they look like afterward?</p>
 <p><code>audit_transform()</code> shows exactly what a transformation
-function changes:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">audit_transform</span>(firms, trimws)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; ── String Transformation Audit: firms ──────────────────────────────────────────</span></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; Function: trimws</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt;   Metric                        Value</span></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ───────────────────</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   Total elements                    7</span></span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt;   NA values                         1</span></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt;   Changed         1 (16.7% of non-NA)</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt;   Unchanged                         6</span></span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 1 of 1):</span></span>
-<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="co">#&gt;        before     after</span></span>
-<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="co">#&gt;    Microsoft  Microsoft</span></span>
-<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span>
-<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a><span class="fu">audit_transform</span>(firms, tolower)</span>
-<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="co">#&gt; ── String Transformation Audit: firms ──────────────────────────────────────────</span></span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a><span class="co">#&gt; Function: tolower</span></span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">#&gt;   Metric                        Value</span></span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ───────────────────</span></span>
-<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a><span class="co">#&gt;   Total elements                    7</span></span>
-<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a><span class="co">#&gt;   NA values                         1</span></span>
-<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a><span class="co">#&gt;   Changed         4 (66.7% of non-NA)</span></span>
-<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a><span class="co">#&gt;   Unchanged                         3</span></span>
-<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 4 of 4):</span></span>
-<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a><span class="co">#&gt;        before        after</span></span>
-<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a><span class="co">#&gt;         Apple        apple</span></span>
-<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a><span class="co">#&gt;         APPLE        apple</span></span>
-<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a><span class="co">#&gt;    Microsoft    microsoft </span></span>
-<span id="cb15-35"><a href="#cb15-35" tabindex="-1"></a><span class="co">#&gt;        Google       google</span></span>
-<span id="cb15-36"><a href="#cb15-36" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-37"><a href="#cb15-37" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span></code></pre></div>
+does. It automatically detects the vector type and computes
+type-appropriate diagnostics:</p>
+<ul>
+<li><strong>Numeric</strong>: mean/min/max shift, proportion
+changed</li>
+<li><strong>Date/POSIXct</strong>: range change, proportion shifted</li>
+<li><strong>Factor</strong>: level remapping (gained/lost levels)</li>
+<li><strong>Logical</strong>: TRUE/FALSE/NA balance shift</li>
+<li><strong>Character</strong>: string-level before/after
+comparison</li>
+</ul>
+<div id="character-vectors" class="section level3">
+<h3>Character vectors</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">audit_transform</span>(firms, trimws)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="co">#&gt; ── Transformation Audit [character]: firms ─────────────────────────────────────</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co">#&gt; Function: trimws</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="co">#&gt;   Metric                       Value</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ──────────────────</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="co">#&gt;   Total elements                   7</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co">#&gt;   NA (before)                      1</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a><span class="co">#&gt;   NA (after)                       1</span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co">#&gt;   Changed         1 (14.3% of total)</span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co">#&gt;   Unchanged                        6</span></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 1 of 1):</span></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="co">#&gt;        before     after</span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="co">#&gt;    Microsoft  Microsoft</span></span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a><span class="fu">audit_transform</span>(firms, tolower)</span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-21"><a href="#cb19-21" tabindex="-1"></a><span class="co">#&gt; ── Transformation Audit [character]: firms ─────────────────────────────────────</span></span>
+<span id="cb19-22"><a href="#cb19-22" tabindex="-1"></a><span class="co">#&gt; Function: tolower</span></span>
+<span id="cb19-23"><a href="#cb19-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-24"><a href="#cb19-24" tabindex="-1"></a><span class="co">#&gt;   Metric                       Value</span></span>
+<span id="cb19-25"><a href="#cb19-25" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ──────────────────</span></span>
+<span id="cb19-26"><a href="#cb19-26" tabindex="-1"></a><span class="co">#&gt;   Total elements                   7</span></span>
+<span id="cb19-27"><a href="#cb19-27" tabindex="-1"></a><span class="co">#&gt;   NA (before)                      1</span></span>
+<span id="cb19-28"><a href="#cb19-28" tabindex="-1"></a><span class="co">#&gt;   NA (after)                       1</span></span>
+<span id="cb19-29"><a href="#cb19-29" tabindex="-1"></a><span class="co">#&gt;   Changed         4 (57.1% of total)</span></span>
+<span id="cb19-30"><a href="#cb19-30" tabindex="-1"></a><span class="co">#&gt;   Unchanged                        3</span></span>
+<span id="cb19-31"><a href="#cb19-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-32"><a href="#cb19-32" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 4 of 4):</span></span>
+<span id="cb19-33"><a href="#cb19-33" tabindex="-1"></a><span class="co">#&gt;        before        after</span></span>
+<span id="cb19-34"><a href="#cb19-34" tabindex="-1"></a><span class="co">#&gt;         Apple        apple</span></span>
+<span id="cb19-35"><a href="#cb19-35" tabindex="-1"></a><span class="co">#&gt;         APPLE        apple</span></span>
+<span id="cb19-36"><a href="#cb19-36" tabindex="-1"></a><span class="co">#&gt;    Microsoft    microsoft </span></span>
+<span id="cb19-37"><a href="#cb19-37" tabindex="-1"></a><span class="co">#&gt;        Google       google</span></span>
+<span id="cb19-38"><a href="#cb19-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb19-39"><a href="#cb19-39" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span></code></pre></div>
+</div>
+<div id="numeric-vectors" class="section level3">
+<h3>Numeric vectors</h3>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>prices <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">10.456</span>, <span class="fl">20.789</span>, <span class="fl">30.123</span>, <span class="cn">NA</span>, <span class="fl">50.999</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="fu">audit_transform</span>(prices, round)</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="co">#&gt; ── Transformation Audit [numeric]: prices ──────────────────────────────────────</span></span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="co">#&gt; Function: round</span></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="co">#&gt;   Metric                       Value</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ──────────────────</span></span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="co">#&gt;   Total elements                   5</span></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a><span class="co">#&gt;   NA (before)                      1</span></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="co">#&gt;   NA (after)                       1</span></span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a><span class="co">#&gt;   Changed         4 (80.0% of total)</span></span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a><span class="co">#&gt;   Unchanged                        1</span></span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a><span class="co">#&gt; Numeric summary:</span></span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a><span class="co">#&gt;   Metric  Before  After</span></span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a><span class="co">#&gt;   ──────  ──────  ─────</span></span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a><span class="co">#&gt;   Mean     28.09     28</span></span>
+<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a><span class="co">#&gt;   SD       17.26  17.38</span></span>
+<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a><span class="co">#&gt;   Min      10.46     10</span></span>
+<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a><span class="co">#&gt;   Median   25.46   25.5</span></span>
+<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a><span class="co">#&gt;   Max         51     51</span></span>
+<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a><span class="co">#&gt;   NaN          0      0</span></span>
+<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a><span class="co">#&gt;   Inf          0      0</span></span>
+<span id="cb20-25"><a href="#cb20-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-26"><a href="#cb20-26" tabindex="-1"></a><span class="co">#&gt; Mean absolute delta: 0.1977</span></span>
+<span id="cb20-27"><a href="#cb20-27" tabindex="-1"></a><span class="co">#&gt; Changed beyond tolerance: 4 (100.0%)</span></span>
+<span id="cb20-28"><a href="#cb20-28" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-29"><a href="#cb20-29" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 4 of 4):</span></span>
+<span id="cb20-30"><a href="#cb20-30" tabindex="-1"></a><span class="co">#&gt;  before after</span></span>
+<span id="cb20-31"><a href="#cb20-31" tabindex="-1"></a><span class="co">#&gt;  10.456    10</span></span>
+<span id="cb20-32"><a href="#cb20-32" tabindex="-1"></a><span class="co">#&gt;  20.789    21</span></span>
+<span id="cb20-33"><a href="#cb20-33" tabindex="-1"></a><span class="co">#&gt;  30.123    30</span></span>
+<span id="cb20-34"><a href="#cb20-34" tabindex="-1"></a><span class="co">#&gt;  50.999    51</span></span>
+<span id="cb20-35"><a href="#cb20-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-36"><a href="#cb20-36" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span></code></pre></div>
+</div>
+<div id="date-vectors" class="section level3">
+<h3>Date vectors</h3>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>dates <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">c</span>(<span class="st">&quot;2024-01-15&quot;</span>, <span class="st">&quot;2024-06-30&quot;</span>, <span class="st">&quot;2024-12-01&quot;</span>, <span class="cn">NA</span>))</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">audit_transform</span>(dates, <span class="cf">function</span>(d) d <span class="sc">+</span> <span class="dv">30</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co">#&gt; ── Transformation Audit [Date]: dates ──────────────────────────────────────────</span></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="co">#&gt; Function: function(d) d + 30</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co">#&gt;   Metric                       Value</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ──────────────────</span></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a><span class="co">#&gt;   Total elements                   4</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a><span class="co">#&gt;   NA (before)                      1</span></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a><span class="co">#&gt;   NA (after)                       1</span></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a><span class="co">#&gt;   Changed         3 (75.0% of total)</span></span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a><span class="co">#&gt;   Unchanged                        1</span></span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a><span class="co">#&gt; Date range:</span></span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a><span class="co">#&gt;   Metric           Before       After</span></span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a><span class="co">#&gt;   ───────────  ──────────  ──────────</span></span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a><span class="co">#&gt;   Min          2024-01-15  2024-02-14</span></span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a><span class="co">#&gt;   Max          2024-12-01  2024-12-31</span></span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a><span class="co">#&gt;   Span (days)       321.0       321.0</span></span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 3 of 3):</span></span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a><span class="co">#&gt;      before      after</span></span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a><span class="co">#&gt;  2024-01-15 2024-02-14</span></span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a><span class="co">#&gt;  2024-06-30 2024-07-30</span></span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a><span class="co">#&gt;  2024-12-01 2024-12-31</span></span>
+<span id="cb21-27"><a href="#cb21-27" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb21-28"><a href="#cb21-28" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span></code></pre></div>
+</div>
+<div id="factor-vectors" class="section level3">
+<h3>Factor vectors</h3>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>sizes <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;S&quot;</span>, <span class="st">&quot;M&quot;</span>, <span class="st">&quot;L&quot;</span>, <span class="st">&quot;XL&quot;</span>, <span class="st">&quot;XXL&quot;</span>, <span class="st">&quot;S&quot;</span>, <span class="st">&quot;M&quot;</span>))</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">audit_transform</span>(sizes, <span class="cf">function</span>(f) {</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="fu">levels</span>(f)[<span class="fu">levels</span>(f) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;XL&quot;</span>, <span class="st">&quot;XXL&quot;</span>)] <span class="ot">&lt;-</span> <span class="st">&quot;XL+&quot;</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>  f</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>})</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="co">#&gt; ── Transformation Audit [factor]: sizes ────────────────────────────────────────</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="co">#&gt; Function: function(f) {, levels(f)[levels(f) %in% c(&quot;XL&quot;, &quot;XXL&quot;)] &lt;- &quot;XL+&quot;, f,</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a><span class="co">#&gt; and }</span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="co">#&gt;   Metric                       Value</span></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ──────────────────</span></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a><span class="co">#&gt;   Total elements                   7</span></span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="co">#&gt;   NA (before)                      0</span></span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a><span class="co">#&gt;   NA (after)                       0</span></span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a><span class="co">#&gt;   Changed         2 (28.6% of total)</span></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co">#&gt;   Unchanged                        5</span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="co">#&gt; Factor levels:</span></span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="co">#&gt; • Levels added: XL+</span></span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a><span class="co">#&gt; • Levels removed: XL, XXL</span></span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt; Level counts (before | after):</span></span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt;   Level  Before  After</span></span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="co">#&gt;   ─────  ──────  ─────</span></span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a><span class="co">#&gt;   &lt;NA&gt;        0      0</span></span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a><span class="co">#&gt;   L           1      1</span></span>
+<span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a><span class="co">#&gt;   M           2      2</span></span>
+<span id="cb22-29"><a href="#cb22-29" tabindex="-1"></a><span class="co">#&gt;   S           2      2</span></span>
+<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a><span class="co">#&gt;   XL          1      0</span></span>
+<span id="cb22-31"><a href="#cb22-31" tabindex="-1"></a><span class="co">#&gt;   XL+         0      2</span></span>
+<span id="cb22-32"><a href="#cb22-32" tabindex="-1"></a><span class="co">#&gt;   XXL         1      0</span></span>
+<span id="cb22-33"><a href="#cb22-33" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-34"><a href="#cb22-34" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 2 of 2):</span></span>
+<span id="cb22-35"><a href="#cb22-35" tabindex="-1"></a><span class="co">#&gt;  before after</span></span>
+<span id="cb22-36"><a href="#cb22-36" tabindex="-1"></a><span class="co">#&gt;      XL   XL+</span></span>
+<span id="cb22-37"><a href="#cb22-37" tabindex="-1"></a><span class="co">#&gt;     XXL   XL+</span></span>
+<span id="cb22-38"><a href="#cb22-38" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb22-39"><a href="#cb22-39" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span></code></pre></div>
+</div>
+<div id="logical-vectors" class="section level3">
+<h3>Logical vectors</h3>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>flags <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">NA</span>, <span class="cn">FALSE</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">audit_transform</span>(flags, <span class="cf">function</span>(x) <span class="sc">!</span>x)</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="co">#&gt; ── Transformation Audit [logical]: flags ───────────────────────────────────────</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="co">#&gt; Function: function(x) !x</span></span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="co">#&gt;   Metric                       Value</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="co">#&gt;   ──────────────  ──────────────────</span></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a><span class="co">#&gt;   Total elements                   5</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a><span class="co">#&gt;   NA (before)                      1</span></span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a><span class="co">#&gt;   NA (after)                       1</span></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a><span class="co">#&gt;   Changed         4 (80.0% of total)</span></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a><span class="co">#&gt;   Unchanged                        1</span></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a><span class="co">#&gt; Logical balance:</span></span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a><span class="co">#&gt;   Value  Before  After</span></span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1"></a><span class="co">#&gt;   ─────  ──────  ─────</span></span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1"></a><span class="co">#&gt;   TRUE        2      2</span></span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1"></a><span class="co">#&gt;   FALSE       2      2</span></span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1"></a><span class="co">#&gt;   NA          1      1</span></span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1"></a><span class="co">#&gt; Examples of changes (showing 4 of 4):</span></span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1"></a><span class="co">#&gt;  before after</span></span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1"></a><span class="co">#&gt;    TRUE FALSE</span></span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1"></a><span class="co">#&gt;   FALSE  TRUE</span></span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1"></a><span class="co">#&gt;    TRUE FALSE</span></span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1"></a><span class="co">#&gt;   FALSE  TRUE</span></span>
+<span id="cb23-28"><a href="#cb23-28" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb23-29"><a href="#cb23-29" tabindex="-1"></a><span class="co">#&gt; Access cleaned vector with: `result$cleaned`</span></span></code></pre></div>
 </div>
 </div>
 

@@ -6,10 +6,18 @@
 #'
 #' @param .data A data.frame or tibble flowing through the pipe.
 #' @param .trail An [audit_trail()] object.
-#' @param label Optional character label for this snapshot. If `NULL`, an
+#' @param .label Optional character label for this snapshot. If `NULL`, an
 #'   auto-generated label like `"step_1"` is used.
 #' @param .fns Optional named list of diagnostic functions (or formula lambdas)
 #'   to run on `.data`. Results are stored in the snapshot.
+#' @param .numeric_summary Logical. If `FALSE`, skip numeric summary
+#'   computation in the snapshot (default `TRUE`).
+#' @param .cols_include Character vector of column names to include in the
+#'   snapshot schema, or `NULL` (the default) to include all columns. Mutually
+#'   exclusive with `.cols_exclude`.
+#' @param .cols_exclude Character vector of column names to exclude from the
+#'   snapshot schema, or `NULL` (the default). Mutually exclusive with
+#'   `.cols_include`.
 #'
 #' @returns `.data`, unchanged, returned invisibly. The function is a
 #'   transparent pass-through; its only effect is the side effect on `.trail`.
@@ -24,16 +32,18 @@
 #'
 #' @family audit trail
 #' @export
-audit_tap <- function(.data, .trail, label = NULL, .fns = NULL) {
+audit_tap <- function(.data, .trail, .label = NULL, .fns = NULL,
+                      .numeric_summary = TRUE,
+                      .cols_include = NULL, .cols_exclude = NULL) {
   data_expr <- substitute(.data)
 
   # Validate arguments that don't require .data evaluation
   if (!inherits(.trail, "audit_trail")) {
     cli::cli_abort("{.arg .trail} must be an {.cls audit_trail} object.")
   }
-  if (!is.null(label)) {
-    if (!is.character(label) || length(label) != 1L || is.na(label)) {
-      cli::cli_abort("{.arg label} must be a single character string or NULL.")
+  if (!is.null(.label)) {
+    if (!is.character(.label) || length(.label) != 1L || is.na(.label)) {
+      cli::cli_abort("{.arg .label} must be a single character string or NULL.")
     }
   }
   if (!is.null(.fns) && !is.list(.fns)) {
@@ -51,19 +61,23 @@ audit_tap <- function(.data, .trail, label = NULL, .fns = NULL) {
   }
 
   # Auto-generate label if not provided
-  if (is.null(label)) {
-    label <- paste0("step_", length(.trail$snapshots) + 1L)
+  if (is.null(.label)) {
+    .label <- paste0("step_", length(.trail$snapshots) + 1L)
   }
 
   # Check label uniqueness
-  if (label %in% .trail$labels) {
+  if (.label %in% .trail$labels) {
     trail_name <- .trail$name
-    cli::cli_abort("Label {.val {label}} already exists in trail {.val {trail_name}}.")
+    label_val <- .label
+    cli::cli_abort("Label {.val {label_val}} already exists in trail {.val {trail_name}}.")
   }
 
   # Build snapshot (index computed after forcing .data)
   index <- length(.trail$snapshots) + 1L
-  snap <- .build_snapshot(.data, label = label, index = index)
+  snap <- .build_snapshot(.data, label = .label, index = index,
+                          .numeric_summary = .numeric_summary,
+                          .cols_include = .cols_include,
+                          .cols_exclude = .cols_exclude)
 
   # Capture pipeline (best-effort)
   snap$pipeline <- tryCatch(.capture_pipeline(data_expr), error = function(e) NULL)
@@ -93,7 +107,7 @@ audit_tap <- function(.data, .trail, label = NULL, .fns = NULL) {
 
   # Mutate trail (reference semantics — side effect)
   .trail$snapshots[[index]] <- snap
-  .trail$labels <- c(.trail$labels, label)
+  .trail$labels <- c(.trail$labels, .label)
 
   # Return data unchanged, invisibly (side-effect-only function)
   invisible(.data)
@@ -114,26 +128,26 @@ audit_tap <- function(.data, .trail, label = NULL, .fns = NULL) {
     row_delta    = curr$nrow - prev$nrow,
     col_delta    = curr$ncol - prev$ncol,
     na_delta     = curr$total_nas - prev$total_nas,
-    cols_added   = setdiff(curr$col_info$column, prev$col_info$column),
-    cols_removed = setdiff(prev$col_info$column, curr$col_info$column),
-    type_changes = .detect_type_changes(prev$col_info, curr$col_info)
+    cols_added   = setdiff(curr$all_columns, prev$all_columns),
+    cols_removed = setdiff(prev$all_columns, curr$all_columns),
+    type_changes = .detect_type_changes(prev$schema, curr$schema)
   )
 }
 
 #' Detect Column Type Changes Between Snapshots
 #'
-#' @param prev_col_info Column info data.frame from previous snapshot.
-#' @param curr_col_info Column info data.frame from current snapshot.
+#' @param prev_schema Schema data.frame from previous snapshot.
+#' @param curr_schema Schema data.frame from current snapshot.
 #'
 #' @returns A data.frame of type changes, or `NULL` if none.
 #'
 #' @noRd
-.detect_type_changes <- function(prev_col_info, curr_col_info) {
-  common <- intersect(prev_col_info$column, curr_col_info$column)
+.detect_type_changes <- function(prev_schema, curr_schema) {
+  common <- intersect(prev_schema$column, curr_schema$column)
   if (length(common) == 0L) return(NULL)
 
-  prev_types <- setNames(prev_col_info$type, prev_col_info$column)[common]
-  curr_types <- setNames(curr_col_info$type, curr_col_info$column)[common]
+  prev_types <- setNames(prev_schema$type, prev_schema$column)[common]
+  curr_types <- setNames(curr_schema$type, curr_schema$column)[common]
 
   changed <- common[prev_types != curr_types]
   if (length(changed) == 0L) return(NULL)

@@ -11,8 +11,9 @@ summarize_column(x)
 }
 \value{
 A named character vector with summary statistics including:
-type, unique count, missing count, most frequent value (for non-numeric),
-mean, sd, min, quartiles (q25, q50, q75), max, and three example values.
+type, unique count, missing count, missing share (proportion from 0 to 1),
+most frequent value (for non-numeric), mean, sd, min, quartiles (q25, q50,
+q75), max, and three example values.
 }
 \description{
 Computes summary statistics for a vector. Handles numeric, character,
@@ -28,6 +29,7 @@ Other data quality:
 \code{\link{audit_transform}()},
 \code{\link{diagnose_nas}()},
 \code{\link{diagnose_strings}()},
-\code{\link{get_summary_table}()}
+\code{\link{get_summary_table}()},
+\code{\link{tab}()}
 }
 \concept{data quality}

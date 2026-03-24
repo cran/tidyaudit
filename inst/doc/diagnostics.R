@@ -4,7 +4,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ----setup--------------------------------------------------------------------
+## ----setup, message=FALSE-----------------------------------------------------
 library(tidyaudit)
 library(dplyr)
 
@@ -39,10 +39,10 @@ df <- data.frame(
   value = c(10, 20, 30, 40, 50)
 )
 
-# Single column — not unique
+# Single column -- not unique
 validate_primary_keys(df, "id")
 
-# Composite key — unique
+# Composite key -- unique
 validate_primary_keys(df, c("id", "group"))
 
 ## ----validate-var-rel---------------------------------------------------------
@@ -90,6 +90,25 @@ summarize_column(c("apple", "banana", "apple", "cherry", NA))
 ## ----get-summary-table--------------------------------------------------------
 get_summary_table(messy)
 
+## ----tab-oneway---------------------------------------------------------------
+tab(mtcars, cyl)
+
+## ----tab-sort-----------------------------------------------------------------
+# Sort by frequency
+tab(mtcars, carb, .sort = "freq_desc")
+
+# Keep only top-2 values, collapse rest into (Other)
+tab(mtcars, carb, .cutoff = 2)
+
+## ----tab-twoway---------------------------------------------------------------
+tab(mtcars, cyl, gear)
+
+# Show row percentages instead of counts
+tab(mtcars, cyl, gear, .display = "row_pct")
+
+## ----tab-weighted-------------------------------------------------------------
+tab(mtcars, cyl, .wt = mpg)
+
 ## ----diagnose-strings---------------------------------------------------------
 firms <- c("Apple", "APPLE", "apple", "  Microsoft ", "Google", NA, "")
 diagnose_strings(firms)
@@ -97,4 +116,23 @@ diagnose_strings(firms)
 ## ----audit-transform----------------------------------------------------------
 audit_transform(firms, trimws)
 audit_transform(firms, tolower)
+
+## ----audit-transform-numeric--------------------------------------------------
+prices <- c(10.456, 20.789, 30.123, NA, 50.999)
+audit_transform(prices, round)
+
+## ----audit-transform-date-----------------------------------------------------
+dates <- as.Date(c("2024-01-15", "2024-06-30", "2024-12-01", NA))
+audit_transform(dates, function(d) d + 30)
+
+## ----audit-transform-factor---------------------------------------------------
+sizes <- factor(c("S", "M", "L", "XL", "XXL", "S", "M"))
+audit_transform(sizes, function(f) {
+  levels(f)[levels(f) %in% c("XL", "XXL")] <- "XL+"
+  f
+})
+
+## ----audit-transform-logical--------------------------------------------------
+flags <- c(TRUE, FALSE, TRUE, NA, FALSE)
+audit_transform(flags, function(x) !x)
 

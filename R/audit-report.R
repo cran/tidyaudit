@@ -6,8 +6,6 @@
 #'
 #' @param .trail An [audit_trail()] object.
 #' @param format Report format. Currently only `"console"` is supported.
-#'   `"rmd"` is planned for a future version.
-#' @param file Output file path (used only with `format = "rmd"`).
 #'
 #' @returns `.trail`, invisibly.
 #'
@@ -21,15 +19,11 @@
 #'
 #' @family audit trail
 #' @export
-audit_report <- function(.trail, format = c("console", "rmd"), file = NULL) {
+audit_report <- function(.trail, format = "console") {
   format <- match.arg(format)
 
   if (!inherits(.trail, "audit_trail")) {
     cli::cli_abort("{.arg .trail} must be an {.cls audit_trail} object.")
-  }
-
-  if (format == "rmd") {
-    cli::cli_abort("Rmd report format is not yet implemented. Use {.val console}.")
   }
 
   .print_full_report(.trail)
@@ -72,6 +66,30 @@ audit_report <- function(.trail, format = c("console", "rmd"), file = NULL) {
     }
   }
 
+  # Snapshot controls (when non-default)
+  has_controls <- any(vapply(.trail$snapshots, function(s) !is.null(s$controls), logical(1)))
+  if (has_controls) {
+    cli::cli_text("")
+    cli::cli_rule(left = "Snapshot Controls")
+
+    for (snap in .trail$snapshots) {
+      if (!is.null(snap$controls)) {
+        cli::cli_text("")
+        cli::cli_text("{.strong {snap$label}:}")
+        ctrl <- snap$controls
+        if (!isTRUE(ctrl$numeric_summary)) {
+          cli::cli_text("  numeric_summary: {.val {ctrl$numeric_summary}}")
+        }
+        if (!is.null(ctrl$cols_include)) {
+          cli::cli_text("  cols_include: {.val {ctrl$cols_include}}")
+        }
+        if (!is.null(ctrl$cols_exclude)) {
+          cli::cli_text("  cols_exclude: {.val {ctrl$cols_exclude}}")
+        }
+      }
+    }
+  }
+
   # Custom diagnostics
   has_custom <- any(vapply(.trail$snapshots, function(s) !is.null(s$custom), logical(1)))
   if (has_custom) {
@@ -98,8 +116,8 @@ audit_report <- function(.trail, format = c("console", "rmd"), file = NULL) {
   cli::cli_text("{.strong {last_snap$label}} ({format(last_snap$nrow, big.mark = ',')} rows x {last_snap$ncol} cols)")
 
   # Column types summary
-  col_info <- last_snap$col_info
-  type_counts <- table(col_info$type)
+  schema <- last_snap$schema
+  type_counts <- table(schema$type)
   type_str <- paste(
     vapply(names(type_counts), function(t) glue::glue("{type_counts[t]} {t}"), character(1)),
     collapse = ", "
@@ -108,7 +126,7 @@ audit_report <- function(.trail, format = c("console", "rmd"), file = NULL) {
 
   # NA summary
   if (last_snap$total_nas > 0L) {
-    na_cols <- col_info[col_info$n_na > 0L, , drop = FALSE]
+    na_cols <- schema[schema$n_na > 0L, , drop = FALSE]
     pct <- round(100 * na_cols$n_na / last_snap$nrow, 1)
     na_tbl <- data.frame(
       Column = na_cols$column,
